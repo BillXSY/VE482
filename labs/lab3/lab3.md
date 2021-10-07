@@ -21,15 +21,34 @@
 ```shell
 # In Minix 3 install the rsync software
 pkgin install rsync
+
 # Install rsync on you Linux system
 apt-get install rsync
+
 # Read `rsync` manpage
 man rsync
+
 # Create an exact copy of the directory /usr/src into the directory /usr/src_orig
 rsync -av /usr/src /usr/src_orig
+
 # If you have already altered Minix3 source code for homework2 undo your changes from /usr/src_orig
+rsync -av /usr/src_orig /usr/src
 
 # Create an exact copy of the Minix 3 directory /usr/src into your Linux system, using rsync and ssh (note that the ssh server must be activated under Linux)
+
+```
+
+### 2.2 The`diff` and `patch` commands
+
+```shell
+man diff
+man patch
+
+echo "111" >> src/test
+
+diff -u src_orig/test src/test > patch
+
+
 
 ```
 
