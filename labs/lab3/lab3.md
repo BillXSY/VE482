@@ -11,8 +11,9 @@
 </div>
 
 [TOC]
-
 ## 1 Project 1: presentations
+
+
 
 ## 2 Working with source code
 
@@ -35,20 +36,68 @@ rsync -av /usr/src /usr/src_orig
 rsync -av /usr/src_orig /usr/src
 
 # Create an exact copy of the Minix 3 directory /usr/src into your Linux system, using rsync and ssh (note that the ssh server must be activated under Linux)
-
+rsync -av -e 'ssh -p 2222' root@192.168.164.128:/usr/src ~/
 ```
+
+
 
 ### 2.2 The`diff` and `patch` commands
 
 ```shell
+# Read the manpages of diff and patch
 man diff
 man patch
 
+# Edit a file of your choice in /usr/src
+# Using the diff command, create a patch corresponding to the above changes
 echo "111" >> src/test
-
 diff -u src_orig/test src/test > patch
 
+# Retrieve your patch on your Linux system
+rsync -av -e 'ssh -p 2222' root@192.168.164.128:/root/patch /usr
 
+# Apply your patch to the copy of /usr/src_orig on your Linux system
+cd /usr
+patch -p2 < patch
+
+# Revert the patch
+patch -p2 -R < patch
 
 ```
+
+
+
+### 2.3 Remarks
+
+
+
+### 2.4 Basic git usage
+
+![image-20211007223752312](/Users/billxsy/Library/Application Support/typora-user-images/image-20211007223752312.png)
+
+![image-20211007223757171](/Users/billxsy/Library/Application Support/typora-user-images/image-20211007223757171.png)
+
+
+
+
+
+## 3 Scripting and regular expressions
+
+### 3.1  Shanghai air quality
+
+```shell
+curl -s 'http://aqicn.org/?city=Shanghai&widgetscript&size=large&id=52b39d71decf07.20261781' | sed -rn 's/.*hdrpm25[^>]*>([0-9]+).*hdrt[^>]*>([0-9]+).*/AQ: \1 Temp: \2 ºC/p'
+```
+
+![image-20211007223959642](/Users/billxsy/Library/Application Support/typora-user-images/image-20211007223959642.png)
+
+
+
+### 3.2 IP address
+
+```shell
+ifconfig eth0 | awk -e '{for(j=1;j<=NF;j++){if($j=="inet"){print $(j+1)}}}'
+```
+
+![image-20211007233039696](/Users/billxsy/Library/Application Support/typora-user-images/image-20211007233039696.png)
 
