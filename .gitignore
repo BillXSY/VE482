@@ -1,6 +1,9 @@
-
 .DS_Store
 labs/lab1/lab1.pdf
 projects/codes/
-projects/P1/.idea/
-projects/P1/cmake-build-debug/
+
+*/cmake-build-debug/
+*/*/cmake-build-debug/
+
+*/.idea/
+*/*/.idea/
