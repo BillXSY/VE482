@@ -3,7 +3,6 @@ project(ve482p1)
 set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "-Wall -Wextra -Werror -pedantic -Wno-unused-result -Wconversion")
-
 file(GLOB SOURCE_FILES "*.c")
 
 add_executable(mumsh ${SOURCE_FILES})
