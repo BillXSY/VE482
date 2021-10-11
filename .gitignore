@@ -4,8 +4,10 @@ projects/codes/
 
 */cmake-build-debug/
 */*/cmake-build-debug/
+*/*/*/cmake-build-debug/
+*/*/*/*/cmake-build-debug/
 
 */.idea/
 */*/.idea/
-20FA/Project/VE482-mumsh-master/.idea/misc.xml
-20FA/Project/VE482-mumsh-master/.idea/misc.xml
+*/*/*/.idea/
+*/*/*/*/.idea/
