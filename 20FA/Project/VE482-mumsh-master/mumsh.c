@@ -20,20 +20,25 @@ int main() {
     /* setting up signal handler*/
     action.sa_handler = &sigint_handler;
     /* init */
-    bgCnt = 0;
-    for (int i = 0; i < MAX_BGPROC; i++) bgCommand[i] = NULL;
+    bgCnt = 0; // current working background process; NOTE: job ID starts from 1
+    for (int i = 0; i < MAX_BGPROC; i++) bgCommand[i] = NULL; // background process command
 
-    lastDir = NULL;
+    lastDir = NULL; // last directory
     if ((homedir = getenv("HOME")) == NULL) {
         homedir = getpwuid(getuid())->pw_dir;
     }
+
+    // last pending directory
     lastPendingDir = (char *) malloc(sizeof(char) * MAX_PATH);
     memset(lastPendingDir, 0, MAX_PATH);
+
+    // temp current dir name
     char tmpcwd[MAX_PATH];
     if (getcwd(tmpcwd, sizeof(tmpcwd)) != NULL) {
         debugMsg("Info: pwd copying current directory.\n");
         strcpy(lastPendingDir, tmpcwd);
-    } else strcpy(lastPendingDir, homedir);
+    } else
+        strcpy(lastPendingDir, homedir);
 
 
     /* main loop begins */
@@ -79,6 +84,7 @@ int main() {
                 free(lastPendingDir);
                 exit(0);
             }
+
             /* check incomplete quotation mark and update the flag */
             for (unsigned int i = 0; i < strlen(line); i++) {
                 if (line[i] == '\'') {
@@ -90,12 +96,12 @@ int main() {
                 }
             }
             if (isSQuoNotClosed || isDQuoNotClosed) {
-                strcat(conjLine, line);
+                strcat(conjLine, line); // char *strcat(char *dest, const char *src)把 src 所指向的字符串追加到 dest 所指向的字符串的结尾。
                 isInputNotEnd = 1;
                 continue;
             }
             if (strlen(line) > 1)
-                for (unsigned int i = strlen(line) - 2; i >= 0; i--) { // assume that the last character is newline
+                for (unsigned long i = strlen(line) - 2; i >= 0; i--) { // assume that the last character is newline
                     if (line[i] == ' ') continue;
                     else if (line[i] == '>' || line[i] == '<' || line[i] == '|') {
                         isInputNotEnd = 1;
@@ -106,7 +112,7 @@ int main() {
                 line[strlen(line) - 1] = ' '; // replace newline with blank
                 strcat(conjLine, line);
                 /* check for syntax error */
-                for (unsigned int k = strlen(conjLine) - 1; k > 0; k--) {
+                for (unsigned long k = strlen(conjLine) - 1; k > 0; k--) {
                     int inBranch = 0;
                     if (conjLine[k] == '>' || conjLine[k] == '<' || conjLine[k] == '|') {
                         if (k <= 0)break;
@@ -132,6 +138,7 @@ int main() {
             isInputNotEnd = 0; // break;
         }
         free(line);
+
         if (fgetsErrorFlag == 1 || nodeStatus == PARENT_EXIT) {
             free(conjLine);
             promptExit();
@@ -216,14 +223,18 @@ int main() {
                 }
             }
         }
+
         char tmpLine[MAX_LINE];
         memset(tmpLine, 0, MAX_LINE);
+
         for (unsigned int i = 0, j = 0, k = 0; i < strlen(conjLine); i++) {
             if (j >= deleteCnt || (j < deleteCnt && i != deleteList[j])) tmpLine[k++] = conjLine[i];
             else if (j < deleteCnt && i == deleteList[j]) j++;
         }
+
         memset(conjLine, 0, MAX_LINE);
         strcpy(conjLine, tmpLine);
+
         /** Parsing redirection
          * @Sline: conjLine with keywords >, <, >> separated by space
          */
@@ -242,20 +253,21 @@ int main() {
         char *dupsLine = (char *) malloc(sizeof(char) * MAX_LINE * 2);
         memset(dupsLine, 0, MAX_LINE * 2);
         strcpy(dupsLine, sLine);
+
         /** Tokenize the line; parsing redirection symbols
          * @mArgv: arguments from the input line
          * @mArgc: argument count in the input line
          */
         char **mArgv = (char **) malloc(sizeof(char *) * MAX_LINE); // arguments from the input line
         for (int i = 0; i < MAX_LINE; i++) mArgv[i] = NULL; // init the parameter array
+
         int mArgc = 0; // argument count in the input line
-        char *token;
-        token = strtok(sLine, PARM_DELIM);
+        char *token = strtok(sLine, PARM_DELIM);
         int ioErrorFlag = 0;
         while (token != NULL) {
             // original redirection
             if (token[0] == '>') {
-                if (isOutApp == 1 || isOutRed == 1) {
+                if ( isOutApp == 1 || isOutRed == 1) {
                     if (!ioErrorFlag) errMsg("error: duplicated output redirection\n");
                     ioErrorFlag = 1;
                 }
@@ -306,7 +318,8 @@ int main() {
                     strcpy(inFileName, token);
                     token = strtok(NULL, PARM_DELIM);
                     continue;
-                } else {
+                }
+                else {
                     memset(inFileName, 0, MAX_FILENAME);
                     strcpy(inFileName, token);
                     memmove(inFileName, inFileName + 1, strlen(inFileName));
@@ -502,7 +515,8 @@ int main() {
                     char tmpMsg[MAX_LINE];
                     if (waitpid(bgJob[i * 2], NULL, WNOHANG) == 0)
                         sprintf(tmpMsg, "[%d] running %s\n", i + 1, bgCommand[i]);
-                    else sprintf(tmpMsg, "[%d] done %s\n", i + 1, bgCommand[i]);
+                    else
+                        sprintf(tmpMsg, "[%d] done %s\n", i + 1, bgCommand[i]);
                     stdoutMsg(tmpMsg);
                 }
                 continue;
@@ -632,7 +646,8 @@ int main() {
                 // debugMsg(tmpMsg);
                 waitpid(lastPid[i], NULL, WUNTRACED);
             }
-        } else if (isBackground == 1) { // The process is running in the background
+        }
+        else if (isBackground == 1) { // The process is running in the background
             waitpid(bgJob[(bgCnt - 1) * 2], &childStatus, WNOHANG);
         }
 
@@ -640,6 +655,7 @@ int main() {
         free(mArgv);
         promptExit();
     }
+
     for (int i = 0; i < bgCnt; i++) free(bgCommand[i]);
     if (lastDir != NULL) free(lastDir);
     return 0;
