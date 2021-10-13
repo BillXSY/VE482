@@ -32,41 +32,48 @@ void readInput(char *input, argv_info *info, char *processed_input, char **argv)
 
     // expand redirection symbols
     int real_i = 0;
-    int single_quote = -1;
-    int double_quote = -1;
+    int sQuote = -1;
+    int dQuote = -1;
     for (int i = 0; i < (int) strlen(input); ++i) {
+        // doule quote
         if (input[i] == '\"') {
-            if (single_quote == -1) {
-                if (double_quote == -1) {
-                    double_quote = i;
+            if (sQuote == -1) {
+                if (dQuote == -1) {
+                    dQuote = i;
                 } else {
-                    double_quote = -1;
+                    dQuote = -1;
                 }
             } else {
                 processed_input[real_i++] = input[i];
             }
         }
+        // single quote
         else if (input[i] == '\'') {
-            if (double_quote == -1) {
-                if (single_quote == -1) {
-                    single_quote = i;
+            if (dQuote == -1) {
+                if (sQuote == -1) {
+                    sQuote = i;
                 } else {
-                    single_quote = -1;
+                    sQuote = -1;
                 }
             } else {
                 processed_input[real_i++] = input[i];
             }
         }
-        else if (single_quote == -1 && double_quote == -1) {
+        // hasn't find a quote mark yet
+        else if (sQuote == -1 && dQuote == -1) {
             if (input[i] != '<' && input[i] != '>') {
                 processed_input[real_i++] = input[i];
-            } else if (input[i] == '>' && input[i + 1] == '>') {
+            }
+            // add space before and after >>
+            else if (input[i] == '>' && input[i + 1] == '>') {
                 processed_input[real_i++] = ' ';
                 processed_input[real_i++] = '>';
                 processed_input[real_i++] = '>';
                 processed_input[real_i++] = ' ';
                 ++i;
-            } else {
+            }
+            // add space before and after ordinary input
+            else {
                 processed_input[real_i++] = ' ';
                 processed_input[real_i++] = input[i];
                 processed_input[real_i++] = ' ';
@@ -116,7 +123,7 @@ void readInput(char *input, argv_info *info, char *processed_input, char **argv)
         }
     }
 
-    info->single_quote = single_quote;
-    info->double_quote = double_quote;
+    info->sQuote = sQuote;
+    info->dQuote = dQuote;
     info->length = length;
 }

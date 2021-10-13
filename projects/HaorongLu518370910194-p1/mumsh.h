@@ -40,8 +40,8 @@ typedef struct {
 cd_history cd_his;
 
 typedef struct {
-    int single_quote;
-    int double_quote;
+    int sQuote;
+    int dQuote;
     int length;
 } argv_info;
 

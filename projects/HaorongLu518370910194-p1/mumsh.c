@@ -68,7 +68,7 @@ int main() {
 
             readInput(input, info, processed_input, argv);
 
-            while (info->single_quote != -1 || info->double_quote != -1 || !strcmp(argv[info->length - 1], "<") ||
+            while (info->sQuote != -1 || info->dQuote != -1 || !strcmp(argv[info->length - 1], "<") ||
                    !strcmp(argv[info->length - 1], ">") || !strcmp(argv[info->length - 1], "|")) {
                 prompt("> ");
                 if (fgets(input, MAX_LINE, stdin) != NULL) {
@@ -76,7 +76,7 @@ int main() {
                         continue;
                     }
                     input[strlen(input) - 1] = '\0';
-                    if (info->single_quote != -1 || info->double_quote != -1) {
+                    if (info->sQuote != -1 || info->dQuote != -1) {
                         rcmb_input[strlen(rcmb_input)] = '\n';
                     } else if (!strcmp(argv[info->length - 1], "|")) {
                         rcmb_input[strlen(rcmb_input)] = ' ';
@@ -219,6 +219,7 @@ int main() {
             }
             free(jobs_array);
             free(jobs_pid);
+
             exit(0);
         }
     }
