@@ -40,7 +40,7 @@ int main() {
         exit(-1);
     }
     // Load the helloworld function
-    demofn_t demofn = dlsym(libhandle, "helloworld");
+    demofn_t demofn = dlsym(libhandle, "helloworld"); // symbol: name of function or global variable in the .so file
     if (!demofn) {
         printf("Error loading function helloworld.\n");
         exit(-1);
