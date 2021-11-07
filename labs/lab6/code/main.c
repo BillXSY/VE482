@@ -17,29 +17,32 @@
 typedef void(*demofn_t)(char *, char *);
 
 
-int main(inc argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("Invalid number of operands:\n"
                "require 3, only get %d\n", argc - 1);
         return -1;
     }
 
-    char file_name[MAX_LENGTH];
-    strcpy(file_name, argv[1]);
-    char *token = strtok(file_name, "_");
+    char fileName[MAX_LENGTH];
+    strcpy(fileName, argv[1]);
+    char *token = strtok(fileName, "_");
     token = strtok(NULL, ".");
     token = strtok(NULL, ".");
     int file_type = strcmp(token, "csv") ? TXT : CSV;
+//    printf("file_type is %d\n", file_type);
 
-    char dldir[2][20];
-    strcpy(dldir[0], "./dl_sort_txt");
-    strcpy(dldir[1], "./dl_sort_csv");
-    char dlname[2][20];
-    strcpy(dlname[0], "./dl_sort_txt.so");
-    strcpy(dlname[1], "./dl_sort_csv.so");
-    char dlfuncName[2][20];
-    strcpy(dlfuncName[0], "sort_txt");
-    strcpy(dlfuncName[1], "sort_csv");
+    char dlDir[2][20];
+    strcpy(dlDir[0], "./dl_sort_txt");
+    strcpy(dlDir[1], "./dl_sort_csv");
+
+    char dlName[2][20];
+    strcpy(dlName[0], "./dl_sort_txt.so");
+    strcpy(dlName[1], "./dl_sort_csv.so");
+
+    char dlFuncName[2][20];
+    strcpy(dlFuncName[0], "sort_txt");
+    strcpy(dlFuncName[1], "sort_csv");
 
     // Go through the directory to find "dl_sort_txt.so", "dl_sort_csv.so".
     int flag = 0;
@@ -58,20 +61,22 @@ int main(inc argc, char *argv[]) {
     closedir(dir);
     free(filename);
     if (flag == 0) {
-        printf("failed to find \"%s\", exiting...\n", dlname[file_type]);
+        printf("failed to find \"%s\", exiting...\n", dlName[file_type]);
         exit(-1);
     }
 
 
     // Open the dl file
-    void *libhandle = dlopen(dlname[file_type], RTLD_NOW);
+    void *libhandle = dlopen(dlName[file_type], RTLD_NOW);
     if (!libhandle) {
         printf("Error loading dl_sort_txt.so.\n");
         exit(-1);
     }
 
     // Load the sort_txt function
-    demofn_t demofn = dlsym(libhandle, dlfuncName[file_type]);
+//    printf("%s\n", dlfuncName[file_type]);
+
+    demofn_t demofn = (void (*)(char *, char *)) dlsym(libhandle, dlFuncName[file_type]);
     if (!demofn) {
         printf("Error loading function sort_txt.\n");
         exit(-1);
