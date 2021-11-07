@@ -13,3 +13,6 @@ projects/codes/
 */*/*/*/.idea/
 *.zip
 projects/p2-group-06/
+*.so
+*.o
+*.gch
