@@ -24,4 +24,5 @@ main: main.c $(DL_SORT_TXT) $(DL_SORT_CSV_SRC)
 	$(CC) $(CFLAGS) $(CFLAGS_main) main.c -ldl -o $(L6) -g
 
 clean:
-	rm $(DL_SORT_TXT) $(DL_SORT_CSV) $(L6_MEMORY_CHECK) $(L6)
+	-rm $(DL_SORT_TXT) $(DL_SORT_CSV) $(L6_MEMORY_CHECK) $(L6)
+	-rm -r *.dSYM
