@@ -1,4 +1,4 @@
-#ifndef DADFS 
+#ifndef DADFS
 
 #define DADFS
 
@@ -16,11 +16,11 @@
 
 #ifdef DADFS_DEBUG
 #define sfs_trace(fmt, ...) {                       \
-	printk(KERN_ERR "[dadfs] %s +%d:" fmt,       \
-	       __FILE__, __LINE__, ##__VA_ARGS__);      \
+    printk(KERN_ERR "[dadfs] %s +%d:" fmt,       \
+           __FILE__, __LINE__, ##__VA_ARGS__);      \
 }
 #define sfs_debug(level, fmt, ...) {                \
-	printk(level "[dadfs]:" fmt, ##__VA_ARGS__); \
+    printk(level "[dadfs]:" fmt, ##__VA_ARGS__); \
 }
 #else
 #define sfs_trace(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
@@ -51,19 +51,19 @@ const int DADFS_ROOTDIR_DATABLOCK_NUMBER = 4;
 /* The name+inode_number pair for each file in a directory.
  * This gets stored as the data for a directory */
 struct dadfs_dir_record {
-	char filename[DADFS_FILENAME_MAXLEN];
-	uint64_t inode_no;
+    char filename[DADFS_FILENAME_MAXLEN];
+    uint64_t inode_no;
 };
 
 struct dadfs_inode {
-	mode_t mode;
-	uint64_t inode_no;
-	uint64_t data_block_number;
+    mode_t mode;
+    uint64_t inode_no;
+    uint64_t data_block_number;
 
-	union {
-		uint64_t file_size;
-		uint64_t dir_children_count;
-	};
+    union {
+        uint64_t file_size;
+        uint64_t dir_children_count;
+    };
 };
 
 const int DADFS_MAX_FILESYSTEM_OBJECTS_SUPPORTED = 64;
@@ -78,19 +78,19 @@ const int DADFS_MAX_FILESYSTEM_OBJECTS_SUPPORTED = 64;
 
 struct journal_s;
 struct dadfs_super_block {
-	uint64_t version;
-	uint64_t magic;
-	uint64_t block_size;
+    uint64_t version;
+    uint64_t magic;
+    uint64_t block_size;
 
-	/* FIXME: This should be moved to the inode store and not part of the sb */
-	uint64_t inodes_count;
+    /* FIXME: This should be moved to the inode store and not part of the sb */
+    uint64_t inodes_count;
 
-	uint64_t free_blocks;
+    uint64_t free_blocks;
 
-	/** FIXME: move this into separate struct */
-	struct journal_s *journal;
+    /** FIXME: move this into separate struct */
+    struct journal_s *journal;
 
-	char padding[4048];
+    char padding[4048];
 };
 
 #endif // #ifndef DADFS 
