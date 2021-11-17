@@ -15,6 +15,10 @@
 #include <linux/parser.h>
 #include <linux/blkdev.h>
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
+#include <linux/uio.h>
+#endif
+
 #include "sblock.h"
 
 #ifndef f_dentry
@@ -358,13 +362,14 @@ int dadfs_inode_save(struct super_block *sb, struct dadfs_inode *sfs_inode) {
 
 /* FIXME: The write support is rudimentary. I have not figured out a way to do writes
  * from particular offsets (even though I have written some untested code for this below) efficiently. */
-ssize_t dadfs_write(struct file *filp, const char __user
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+ssize_t dadfs_write(struct file * filp, const char __user * buf, size_t len,
+               loff_t * ppos)
+#else
 
-* buf,
-size_t len,
-        loff_t
-* ppos)
-{
+ssize_t dadfs_write(struct file * filp, const char __user* buf, size_t len, loff_t * ppos)
+#endif
+        {
 /* After the commit dd37978c5 in the upstream linux kernel,
  * we can use just filp->f_inode instead of the
  * f->f_path.dentry->d_inode redirection */
@@ -379,25 +384,39 @@ char *buffer;
 
 int retval;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
 sb = filp->f_path.dentry->d_inode->i_sb;
+#else
+sb = kiocb->ki_filp->f_inode->i_sb;
+#endif
 sfs_sb = DADFS_SB(sb);
 
 handle = jbd2_journal_start(sfs_sb->journal, 1);
-if (
-IS_ERR(handle)
-)
-return
-PTR_ERR(handle);
-retval = generic_write_checks(filp, ppos, &len, 0);
-if (retval)
-return
-retval;
+if (IS_ERR(handle))
+    return PTR_ERR(handle);
 
-inode = filp->f_path.dentry->d_inode;
-sfs_inode = DADFS_INODE(inode);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+    retval = generic_write_checks(filp, ppos, &len, 0);
+#else
+    retval = generic_write_checks(kiocb, iov_iter);
+#endif
+    if (retval)
+        return retval;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+    inode = filp->f_path.dentry->d_inode;
+#else
+    inode = kiocb->ki_filp->f_inode;
+#endif
 
-bh = sb_bread(filp->f_path.dentry->d_inode->i_sb,
+    sfs_inode = DADFS_INODE(inode);
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+    bh = sb_bread(filp->f_path.dentry->d_inode->i_sb,
+                        sfs_inode->data_block_number);
+#else
+    bh = sb_bread(kiocb->ki_filp->f_inode->i_sb,
               sfs_inode->data_block_number);
+#endif
 
 if (!bh) {
 printk(KERN_ERR
@@ -408,48 +427,46 @@ return 0;
 buffer = (char *) bh->b_data;
 
 /* Move the pointer until the required byte offset */
-buffer += *
-ppos;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+    buffer += *ppos;
+#else
+    buffer += kiocb->ki_pos;
+#endif
 
 retval = jbd2_journal_get_write_access(handle, bh);
-if (
-WARN_ON(retval)
-) {
-brelse(bh);
-sfs_trace("Can't get write access for bh\n");
-return
-retval;
+if (WARN_ON(retval)) {
+    brelse(bh);
+    sfs_trace("Can't get write access for bh\n");
+    return retval;
 }
 
-if (
-copy_from_user(buffer, buf, len
-)) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+if (copy_from_user(buffer, buf, len)) {
+#else
+if (copy_from_iter(buffer, iov_iter->count, iov_iter) == 0) { // FIXME
+#endif
+
 brelse(bh);
 printk(KERN_ERR
 "Error copying file contents from the userspace buffer to the kernel space\n");
-return -
-EFAULT;
+return -EFAULT;
 }
-*ppos +=
-len;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+    *ppos += len;
+#else
+    kiocb->ki_pos += iov_iter->count;
+#endif
 
 retval = jbd2_journal_dirty_metadata(handle, bh);
-if (
-WARN_ON(retval)
-) {
+if (WARN_ON(retval)) {
 brelse(bh);
-return
-retval;
+return retval;
 }
-handle->
-h_sync = 1;
+handle->h_sync = 1;
 retval = jbd2_journal_stop(handle);
-if (
-WARN_ON(retval)
-) {
-brelse(bh);
-return
-retval;
+if (WARN_ON(retval)) {
+    brelse(bh);
+    return retval;
 }
 
 mark_buffer_dirty(bh);
@@ -463,14 +480,17 @@ brelse(bh);
  * The above code will also fail in case a file is overwritten with
  * a shorter buffer */
 if (mutex_lock_interruptible(&dadfs_inodes_mgmt_lock)) {
-sfs_trace("Failed to acquire mutex lock\n");
-return -
-EINTR;
+    sfs_trace("Failed to acquire mutex lock\n");
+    return -EINTR;
 }
-sfs_inode->
-file_size = *ppos;
-retval = dadfs_inode_save(sb, sfs_inode);
-if (retval) {
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+    sfs_inode->file_size = *ppos;
+#else
+    sfs_inode->file_size = (kiocb->ki_pos);
+#endif
+    retval = dadfs_inode_save(sb, sfs_inode);
+    if (retval) {
 len = retval;
 }
 mutex_unlock(&dadfs_inodes_mgmt_lock);
