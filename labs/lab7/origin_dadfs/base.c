@@ -14,10 +14,6 @@
 #include <linux/jbd2.h>
 #include <linux/parser.h>
 #include <linux/blkdev.h>
-#include <linux/uio.h>
-#include <linux/kmod.h>
-#include <linux/blktrace_api.h>
-
 
 #include "sblock.h"
 
@@ -272,23 +268,12 @@ struct dadfs_inode *dadfs_get_inode(struct super_block *sb,
 	return inode_buffer;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0)
 ssize_t dadfs_read(struct file * filp, char __user * buf, size_t len,
 		      loff_t * ppos)
-#else
-ssize_t dadfs_read(struct kiocb *kiocb, struct iov_iter *to)
-#endif
 {
 	/* After the commit dd37978c5 in the upstream linux kernel,
 	 * we can use just filp->f_inode instead of the
 	 * f->f_path.dentry->d_inode redirection */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0)
-    struct file* filp = kiocb->ki_filp;
-	loff_t *ppos = &(kiocb->ki_pos);
-	size_t len = iov_iter_count(to);
-#endif
-
-
 	struct dadfs_inode *inode =
 	    DADFS_INODE(filp->f_path.dentry->d_inode);
 	struct buffer_head *bh;
@@ -313,12 +298,7 @@ ssize_t dadfs_read(struct kiocb *kiocb, struct iov_iter *to)
 	buffer = (char *)bh->b_data;
 	nbytes = min((size_t) inode->file_size, len);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0)
-    if (copy_to_user(buf, buffer, nbytes))
-#else
-    if(!copy_to_iter(buffer,len,to))
-#endif
-    {
+	if (copy_to_user(buf, buffer, nbytes)) {
 		brelse(bh);
 		printk(KERN_ERR
 		       "Error copying file contents to the userspace buffer\n");
@@ -372,12 +352,8 @@ int dadfs_inode_save(struct super_block *sb, struct dadfs_inode *sfs_inode)
 
 /* FIXME: The write support is rudimentary. I have not figured out a way to do writes
  * from particular offsets (even though I have written some untested code for this below) efficiently. */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0)
 ssize_t dadfs_write(struct file * filp, const char __user * buf, size_t len,
 		       loff_t * ppos)
-#else
-ssize_t dadfs_write(struct kiocb* kiocb, struct iov_iter * from)
-#endif
 {
 	/* After the commit dd37978c5 in the upstream linux kernel,
 	 * we can use just filp->f_inode instead of the
@@ -393,31 +369,15 @@ ssize_t dadfs_write(struct kiocb* kiocb, struct iov_iter * from)
 
 	int retval;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0)
-    struct file* filp = kiocb->ki_filp;
-	loff_t *ppos = &(kiocb->ki_pos);
-	size_t len = iov_iter_count(from);
-#endif
-    sb = filp->f_inode->i_sb;
-
-
+	sb = filp->f_path.dentry->d_inode->i_sb;
 	sfs_sb = DADFS_SB(sb);
 
 	handle = jbd2_journal_start(sfs_sb->journal, 1);
 	if (IS_ERR(handle))
 		return PTR_ERR(handle);
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0)
-    retval = generic_write_checks(filp, ppos, &len, 0);
-#else
-    retval = generic_write_checks(kiocb,from);
-#endif
-# if LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0)
-    if (retval){
-#else
-    if(!retval){
-#endif
-        return retval;}
+	retval = generic_write_checks(filp, ppos, &len, 0);
+	if (retval)
+		return retval;
 
 	inode = filp->f_path.dentry->d_inode;
 	sfs_inode = DADFS_INODE(inode);
@@ -432,7 +392,6 @@ ssize_t dadfs_write(struct kiocb* kiocb, struct iov_iter * from)
 	}
 	buffer = (char *)bh->b_data;
 
-
 	/* Move the pointer until the required byte offset */
 	buffer += *ppos;
 
@@ -442,12 +401,8 @@ ssize_t dadfs_write(struct kiocb* kiocb, struct iov_iter * from)
 		sfs_trace("Can't get write access for bh\n");
 		return retval;
 	}
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0)
-    if (copy_from_user(buffer, buf, len))
-#else
-    if (!copy_from_iter(buffer,len,from))
-#endif
-    {
+
+	if (copy_from_user(buffer, buf, len)) {
 		brelse(bh);
 		printk(KERN_ERR
 		       "Error copying file contents from the userspace buffer to the kernel space\n");
@@ -492,14 +447,8 @@ ssize_t dadfs_write(struct kiocb* kiocb, struct iov_iter * from)
 }
 
 const struct file_operations dadfs_file_operations = {
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0)
-        .read = dadfs_read,
-	    .write = dadfs_write,
-#else
-        .read_iter = dadfs_read,
-        .write_iter = dadfs_write,
-#endif
+	.read = dadfs_read,
+	.write = dadfs_write,
 };
 
 const struct file_operations dadfs_dir_operations = {
@@ -770,9 +719,9 @@ static int dadfs_load_journal(struct super_block *sb, int devnum)
 	struct dadfs_super_block *sfs_sb = DADFS_SB(sb);
 
 	dev = new_decode_dev(devnum);
+	printk(KERN_INFO "Journal device is: %s\n", __bdevname(dev, b));
 
 	bdev = blkdev_get_by_dev(dev, FMODE_READ|FMODE_WRITE|FMODE_EXCL, sb);
-	printk(KERN_INFO "Journal device is: %s\n", bdevname(bdev, b));
 	if (IS_ERR(bdev))
 		return 1;
 	blocksize = sb->s_blocksize;
