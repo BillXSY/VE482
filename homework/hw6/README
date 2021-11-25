@@ -1,0 +1,3 @@
+The c programe tries to malloc 32 GB in the memory, which theoretically can trigger thrashing.
+
+My computer has physical memory of 16 GB, so theoretically d1~d4 are enough to trigger thrashing. But due to the auto usage of virtual memory, it can handle more than 32 GB. 
