@@ -26,16 +26,20 @@ module_init(dice_init);
 module_exit(dice_exit);
 //TODO: Make gen_sides a module parameter
 
-static struct file_operations fops = {
-        .read = dice_read,
-        .write = dice_write,
-        .open = dice_open,
-        .release = dice_release,
-};
+// static struct file_operations fops = {
+//         .read = dice_read,
+//         .write = dice_write,
+//         .open = dice_open,
+//         .release = dice_release,
+// };
 
 static int __init dice_init(void) {
     //TODO: Find Major number dynamically
     // Hint: alloc_chrdev_region
+    int reg_rslt = 0;
+    dev_t dev;
+    alloc_chrdev_region(&dev, minor, 3, "dive")
+
 
     //TODO: Allocate memory for dices
 
@@ -54,6 +58,7 @@ static void __exit dice_exit(void) {
 static int dice_open(struct inode *inode, struct file *filp) {
     //TODO: Find which dice is opened
     // Hint: container_of, filp->private_data
+    return 1;
 }
 
 static int dice_release(struct inode *inode, struct file *filp) {
@@ -66,9 +71,16 @@ static ssize_t dice_read(struct file *filp, char __user *buff, size_t count, lof
     //TODO: Generate dice patterns, generate random number
     // Attention: handle count and offp carefully
     // Hint: copy_to_user
+    return ssize_t(0);
 }
+
 static ssize_t dice_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp) {
     //TODO: Read in number of dice
     // Attention: handle count and offp carefully
     // Hint: copy_from_user
+    return ssize_t(0);
+
 }
+
+module_init();
+module_exit();

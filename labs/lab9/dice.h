@@ -15,4 +15,9 @@ struct dice_dev{
     struct cdev dice_cdev; /* cdev object of dice */
 };
 
+// dice_type
+#define TYPE_REGULAR 11
+#define TYPE_BACKGAMMON 12
+#define TPYE_GENERIC 13
+
 #endif //DICE_H
