@@ -1,7 +1,5 @@
 # VE482 — Introduction to Operating Systems Lab 9
 
-518370910200 Shengyuan Xu
-
 [TOC]
 
 ## Tasks
@@ -104,8 +102,15 @@
    insmod dice.ko gen_sides = 8
    ```
    
-   
-   
+
+
+
+## Test Result
+
+![image-20211205225836285](./pics/test.jpeg)
+
+
+
 ## Reference
 
    [1] return value of read and write https://linux-kernel-labs.github.io/refs/heads/master/labs/device_drivers.html

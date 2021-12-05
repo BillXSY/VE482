@@ -26,25 +26,32 @@ module_init(dice_init);
 module_exit(dice_exit);
 //TODO: Make gen_sides a module parameter
 
-// static struct file_operations fops = {
-//         .read = dice_read,
-//         .write = dice_write,
-//         .open = dice_open,
-//         .release = dice_release,
-// };
+static struct file_operations fops = {
+        .read = dice_read,
+        .write = dice_write,
+        .open = dice_open,
+        .release = dice_release,
+};
 
 static int __init dice_init(void) {
     //TODO: Find Major number dynamically
     // Hint: alloc_chrdev_region
-    int reg_rslt = 0;
     dev_t dev;
-    alloc_chrdev_region(&dev, minor, 3, "dive")
+    alloc_chrdev_region(&dev, 0, 3, "dice");
+    dice_major = MAJOR(dev);
+
 
 
     //TODO: Allocate memory for dices
+    struct class * class_create(THIS_MODULE, "diceClass");
+
+
 
     //TODO: create a class, loop through registering cdev and creating device
     // Hint: class_create, cdev_init, cdev_add, device_create
+
+
+    
 
     return 0;
 }
@@ -53,6 +60,11 @@ static void __exit dice_exit(void) {
     //TODO: release all resources
     // Hint: Pay attention to the order!
     // Hint: device_destroy, cdev_del, class_destroy, kfree, unregister_chrdev_region
+
+    dev_t first = MKDEV(dice_major, 0);
+    unregister_chrdev_region(first, 3);
+
+    class_destory()
 }
 
 static int dice_open(struct inode *inode, struct file *filp) {
@@ -82,5 +94,7 @@ static ssize_t dice_write(struct file *filp, const char __user *buff, size_t cou
 
 }
 
-module_init();
-module_exit();
+module_init(dice_init);
+module_exit(dice_exit);
+
+MODULE_LICENSE("GPL");
