@@ -4,9 +4,12 @@ sudo insmod ./dicedevice.ko
 cat /proc/modules | grep "dicedevice"
 cat /proc/devices | grep "Dice"
 # creating device files
-sudo mknod /dev/dice0 c 240 0
-sudo mknod /dev/dice1 c 240 1
-sudo mknod /dev/dice2 c 240 2
+sudo mknod /dev/dice0 c 237 0
+sudo mknod /dev/dice1 c 237 1
+sudo mknod /dev/dice2 c 237 2
+sudo chmod 777 /dev/dice0
+sudo chmod 777 /dev/dice1
+sudo chmod 777 /dev/dice2
 # testing
 cat /dev/dice1
 echo 1 > /dev/dice1
